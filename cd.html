@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🎄 Countdown</title>
+
+<style>
+body{
+  margin:0;
+  height:100vh;
+  font-family:system-ui,-apple-system,sans-serif;
+  background:radial-gradient(circle at top,#204f43,#071e18);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  color:white;
+  overflow:hidden;
+}
+
+/* Schnee */
+.snow{
+  position:fixed;
+  inset:0;
+  background-image:
+    radial-gradient(white 1px,transparent 1px),
+    radial-gradient(white 1px,transparent 1px);
+  background-size:40px 40px,80px 80px;
+  animation:snow 22s linear infinite;
+}
+@keyframes snow{
+  from{background-position:0 0,0 0}
+  to{background-position:0 1400px,0 2200px}
+}
+
+.card{
+  background:rgba(0,0,0,.35);
+  padding:3rem;
+  border-radius:30px;
+  text-align:center;
+  backdrop-filter:blur(10px);
+  box-shadow:0 0 60px rgba(0,0,0,.5);
+  z-index:2;
+}
+
+h1{
+  font-size:2.6rem;
+  margin-bottom:1rem;
+}
+
+.countdown{
+  font-size:2.1rem;
+  font-weight:700;
+  letter-spacing:1.5px;
+}
+</style>
+</head>
+
+<body>
+
+<div class="snow"></div>
+
+<div class="card">
+  <h1>🎄 Heiligabend</h1>
+  <div id="cd" class="countdown">lädt …</div>
+</div>
+
+<script>
+function update(){
+  const now=new Date();
+  const year =
+    now.getMonth()===11 && now.getDate()>24
+      ? now.getFullYear()+1
+      : now.getFullYear();
+
+  const target=new Date(year,11,24,0,0,0);
+  const diff=target-now;
+  const el=document.getElementById("cd");
+
+  if(diff<=0){
+    el.textContent="🎁 Heute ist Heiligabend!";
+    return;
+  }
+
+  const d=Math.floor(diff/86400000);
+  const h=Math.floor(diff/3600000)%24;
+  const m=Math.floor(diff/60000)%60;
+  const s=Math.floor(diff/1000)%60;
+
+  el.textContent=
+    d+" Tage "+h+" Std "+m+" Min "+s+" Sek";
+}
+
+update();
+setInterval(update,1000);
+</script>
+
+</body>
+</html>
