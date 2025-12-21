@@ -165,4 +165,24 @@ newGift();
 update();
 </script>
 </body>
+<!-- Unsichtbarer Musik-Player -->
+<iframe id="music"
+  style="display:none"
+  src="https://www.youtube.com/embed/IRfb8roh9KA?enablejsapi=1&controls=0&mute=0&loop=1&playlist=IRfb8roh9KA"
+  allow="autoplay">
+</iframe>
+
+<script>
+let musicStarted = false;
+function startMusic(){
+  if(musicStarted) return;
+  document.getElementById("music").contentWindow.postMessage(
+    '{"event":"command","func":"playVideo","args":""}',"*"
+  );
+  musicStarted = true;
+}
+addEventListener("click", startMusic, { once:true });
+addEventListener("touchstart", startMusic, { once:true });
+</script>
+
 </html>
