@@ -3,15 +3,35 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>🎁 Geschenke-Stapeln</title>
+<title>🎁 Geschenke stapeln</title>
+
 <style>
-body{
+html,body{
   margin:0;
-  background: linear-gradient(to top,#071e18,#204f43);
-  font-family: system-ui,-apple-system,sans-serif;
+  padding:0;
+  height:100%;
   overflow:hidden;
+  font-family:system-ui,-apple-system,sans-serif;
+  background:radial-gradient(circle at top,#1b4d3e,#061a14);
+  color:white;
 }
-#canvas{display:block;margin:0 auto;background:transparent;}
+
+canvas{position:fixed;inset:0}
+
+/* HUD */
+.hud{
+  position:fixed;
+  top:20px;
+  left:50%;
+  transform:translateX(-50%);
+  padding:.8rem 1.6rem;
+  border-radius:30px;
+  background:rgba(255,255,255,.15);
+  backdrop-filter:blur(10px);
+  z-index:10;
+}
+
+/* Schnee */
 .snow{
   position:fixed;
   inset:0;
@@ -19,70 +39,126 @@ body{
   background-image:
     radial-gradient(white 1px,transparent 1px),
     radial-gradient(white 1px,transparent 1px);
-  background-size:40px 40px,70px 70px;
-  animation:snow 20s linear infinite;
+  background-size:40px 40px,80px 80px;
+  animation:snow 30s linear infinite;
+  z-index:2;
 }
 @keyframes snow{
   from{background-position:0 0,0 0}
-  to{background-position:0 1000px,0 1400px}
+  to{background-position:0 2000px,0 3000px}
+}
+
+/* Game Over */
+#over{
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,.6);
+  display:none;
+  align-items:center;
+  justify-content:center;
+  z-index:20;
+}
+#over div{
+  background:rgba(255,255,255,.18);
+  backdrop-filter:blur(12px);
+  padding:2rem 3rem;
+  border-radius:30px;
+  text-align:center;
 }
 </style>
 </head>
-<body>
-<div class="snow"></div>
-<canvas id="canvas" width="400" height="600"></canvas>
-<script>
-const canvas=document.getElementById("canvas");
-const ctx=canvas.getContext("2d");
 
-let gifts=[];
-let currentGift=null;
+<body>
+
+<div class="hud">🎁 Höhe: <span id="score">0</span></div>
+<div class="snow"></div>
+<canvas id="game"></canvas>
+
+<div id="over">
+  <div>
+    <h2>🎄 Umgefallen!</h2>
+    <p>Dein Score: <span id="final"></span></p>
+    <button onclick="restart()">Nochmal</button>
+  </div>
+</div>
+
+<script>
+const c=document.getElementById("game");
+const ctx=c.getContext("2d");
+c.width=innerWidth;
+c.height=innerHeight;
+
+let stack=[];
+let current;
 let score=0;
+let running=true;
+
+const gifts=["🎁","🎄","🧸","🎀","🍪"];
 
 function newGift(){
-  const w=Math.random()*60+40;
-  const h=30;
-  const x=canvas.width/2-w/2;
-  currentGift={x:x,y:0,w:w,h:h,color:`hsl(${Math.random()*360},80%,60%)`};
+  current={
+    x:c.width/2,
+    y:50,
+    size:48,
+    emoji:gifts[Math.floor(Math.random()*gifts.length)],
+    speed:2
+  };
 }
 
-canvas.addEventListener("click",()=>{
-  if(currentGift){
-    gifts.push(currentGift);
-    currentGift=null;
-    newGift();
-  }
-});
+addEventListener("click",drop);
+addEventListener("touchstart",drop);
 
-function draw(){
-  ctx.clearRect(0,0,canvas.width,canvas.height);
-  // Gifts
-  gifts.forEach(g=>{
-    ctx.fillStyle=g.color;
-    ctx.fillRect(g.x,g.y,g.w,g.h);
-  });
-  if(currentGift){
-    ctx.fillStyle=currentGift.color;
-    ctx.fillRect(currentGift.x,currentGift.y,currentGift.w,currentGift.h);
-    currentGift.y+=3; // Fallgeschwindigkeit
-    if(currentGift.y+currentGift.h>canvas.height){
-      currentGift.y=canvas.height-currentGift.h;
-    }
-  }
-  ctx.fillStyle="white";
-  ctx.font="20px sans-serif";
-  ctx.fillText("Score: "+score,10,30);
+function drop(){
+  if(!running) return;
+  stack.push({...current});
+  score++;
+  document.getElementById("score").textContent=score;
+  newGift();
 }
 
 function update(){
-  if(currentGift) currentGift.y+=1;
-  gifts.forEach((g,i)=>{
-    if(g.y+g.h>=canvas.height){
-      score++;
-    }
+  if(!running) return;
+  ctx.clearRect(0,0,c.width,c.height);
+
+  // Zeichnen
+  stack.forEach((g,i)=>{
+    ctx.font=g.size+"px serif";
+    ctx.textAlign="center";
+    ctx.fillText(g.emoji,g.x,c.height-30-i*g.size);
   });
-  draw();
+
+  // aktuelles Geschenk
+  if(current){
+    current.x+=Math.sin(Date.now()/300)*1.5;
+    ctx.font=current.size+"px serif";
+    ctx.fillText(current.emoji,current.x,current.y);
+  }
+
+  // Umfallen (zu weit seitlich)
+  if(stack.length>0){
+    const last=stack[stack.length-1];
+    if(Math.abs(last.x-c.width/2)>120){
+      endGame();
+    }
+  }
+
   requestAnimationFrame(update);
+}
+
+function endGame(){
+  running=false;
+  document.getElementById("final").textContent=score;
+  document.getElementById("over").style.display="flex";
+}
+
+function restart(){
+  stack=[];
+  score=0;
+  running=true;
+  document.getElementById("score").textContent=0;
+  document.getElementById("over").style.display="none";
+  newGift();
+  update();
 }
 
 newGift();

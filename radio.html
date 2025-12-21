@@ -6,114 +6,91 @@
 <title>🎄 Weihnachtsradio</title>
 
 <style>
-html, body {
-  margin: 0;
-  padding: 0;
-  height: 100%;
-  overflow: hidden;
-  font-family: system-ui, -apple-system, sans-serif;
-  background: radial-gradient(circle at top, #1b4d3e, #061a14);
-  color: white;
+html,body{
+  margin:0;
+  padding:0;
+  height:100%;
+  overflow:hidden;
+  font-family:system-ui,-apple-system,sans-serif;
+  background:radial-gradient(circle at top,#1b4d3e,#061a14);
+  color:white;
 }
 
 /* Glass Card */
-.card {
-  position: absolute;
-  top: 30px;
-  left: 50%;
-  transform: translateX(-50%);
-  padding: 1.5rem 2.5rem;
-  border-radius: 30px;
-  background: rgba(255,255,255,0.12);
-  backdrop-filter: blur(10px);
-  box-shadow: 0 0 50px rgba(0,0,0,0.4);
-  z-index: 10;
-  text-align: center;
+.card{
+  position:absolute;
+  top:30px;
+  left:50%;
+  transform:translateX(-50%);
+  padding:1.2rem 2.4rem;
+  border-radius:30px;
+  background:rgba(255,255,255,.15);
+  backdrop-filter:blur(10px);
+  z-index:10;
+  text-align:center;
 }
 
-.card h1 {
-  margin: 0;
-  font-size: 2rem;
-  letter-spacing: 1px;
-}
-
-/* Start Overlay */
-#overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 20;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: rgba(0,0,0,0.4);
-  cursor: pointer;
-}
-
-#overlay span {
-  padding: 1.2rem 2rem;
-  border-radius: 30px;
-  background: rgba(255,255,255,0.2);
-  backdrop-filter: blur(10px);
-  font-size: 1.3rem;
+#countdown{
+  margin-top:.5rem;
+  font-size:1.1rem;
 }
 
 /* Schnee */
-.snow {
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
+.snow{
+  position:fixed;
+  inset:0;
+  pointer-events:none;
   background-image:
-    radial-gradient(white 1px, transparent 1px),
-    radial-gradient(white 1px, transparent 1px);
-  background-size: 40px 40px, 80px 80px;
-  animation: snow 25s linear infinite;
-  z-index: 1;
+    radial-gradient(white 1px,transparent 1px),
+    radial-gradient(white 1px,transparent 1px);
+  background-size:40px 40px,80px 80px;
+  animation:snow 30s linear infinite;
+}
+@keyframes snow{
+  from{background-position:0 0,0 0}
+  to{background-position:0 2000px,0 3000px}
 }
 
-@keyframes snow {
-  from { background-position: 0 0, 0 0; }
-  to   { background-position: 0 1600px, 0 2400px; }
+/* Santa */
+.santa{
+  position:absolute;
+  top:20%;
+  left:-200px;
+  font-size:4rem;
+  animation:santa 20s linear infinite;
+}
+@keyframes santa{
+  to{transform:translateX(calc(100vw + 300px))}
 }
 
-/* Weihnachtsmann */
-.santa {
-  position: absolute;
-  top: 20%;
-  left: -200px;
-  font-size: 4rem;
-  animation: santaFly 18s linear infinite;
-  z-index: 2;
+/* Tree */
+.tree{
+  position:absolute;
+  bottom:40px;
+  right:40px;
+  font-size:5rem;
+  animation:wobble 3s ease-in-out infinite;
+}
+@keyframes wobble{
+  50%{transform:rotate(2deg)}
 }
 
-@keyframes santaFly {
-  from { transform: translateX(0); }
-  to   { transform: translateX(calc(100vw + 300px)); }
+/* Start Overlay */
+#overlay{
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,.5);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  z-index:20;
 }
-
-/* Baum */
-.tree {
-  position: absolute;
-  bottom: 40px;
-  right: 40px;
-  font-size: 5rem;
-  animation: treeWobble 3s ease-in-out infinite;
-  z-index: 2;
-}
-
-@keyframes treeWobble {
-  0%,100% { transform: rotate(0deg); }
-  50% { transform: rotate(2deg); }
-}
-
-/* YouTube */
-iframe {
-  position: fixed;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  border: none;
-  pointer-events: none;
-  z-index: 0;
+#overlay span{
+  padding:1rem 2rem;
+  border-radius:30px;
+  background:rgba(255,255,255,.2);
+  backdrop-filter:blur(10px);
+  font-size:1.2rem;
 }
 </style>
 </head>
@@ -123,33 +100,49 @@ iframe {
 <div class="snow"></div>
 
 <div class="card">
-  <h1>🎄 Weihnachtsradio</h1>
+  <h2>🎄 Weihnachtsradio</h2>
+  <div id="countdown">lädt…</div>
 </div>
 
 <div class="santa">🎅🛷</div>
 <div class="tree">🎄</div>
 
-<div id="overlay">
-  <span>▶️ Tippen zum Starten</span>
-</div>
+<div id="overlay"><span>▶️ Tippen zum Starten</span></div>
 
+<!-- Unsichtbarer Player -->
 <iframe
   id="player"
-  src="https://www.youtube.com/embed/IRfb8roh9KA?enablejsapi=1&mute=1&controls=0&loop=1&playlist=IRfb8roh9KA&playsinline=1&modestbranding=1&rel=0"
-  allow="autoplay; fullscreen">
+  style="display:none"
+  src="https://www.youtube.com/embed/IRfb8roh9KA?enablejsapi=1&mute=0&controls=0&loop=1&playlist=IRfb8roh9KA"
+  allow="autoplay">
 </iframe>
 
 <script>
-const overlay = document.getElementById("overlay");
-const player = document.getElementById("player");
-
-overlay.addEventListener("click", () => {
+/* Start */
+overlay.onclick=()=>{
   player.contentWindow.postMessage(
-    '{"event":"command","func":"playVideo","args":""}',
-    "*"
+    '{"event":"command","func":"playVideo","args":""}',"*"
   );
   overlay.remove();
-});
+};
+
+/* Countdown */
+function update(){
+  const now=new Date();
+  const year=now.getMonth()==11 && now.getDate()>24 ? now.getFullYear()+1 : now.getFullYear();
+  const target=new Date(year,11,24,0,0,0);
+  const d=target-now;
+  if(d<=0){
+    countdown.textContent="🎁 Heute ist Heiligabend!";
+    return;
+  }
+  const days=Math.floor(d/86400000);
+  const h=Math.floor(d/3600000)%24;
+  const m=Math.floor(d/60000)%60;
+  countdown.textContent=`⏳ ${days} Tage ${h} Std ${m} Min`;
+}
+update();
+setInterval(update,1000);
 </script>
 
 </body>
