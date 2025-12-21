@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🎁 Geschenke-Stapeln</title>
+<style>
+body{
+  margin:0;
+  background: linear-gradient(to top,#071e18,#204f43);
+  font-family: system-ui,-apple-system,sans-serif;
+  overflow:hidden;
+}
+#canvas{display:block;margin:0 auto;background:transparent;}
+.snow{
+  position:fixed;
+  inset:0;
+  pointer-events:none;
+  background-image:
+    radial-gradient(white 1px,transparent 1px),
+    radial-gradient(white 1px,transparent 1px);
+  background-size:40px 40px,70px 70px;
+  animation:snow 20s linear infinite;
+}
+@keyframes snow{
+  from{background-position:0 0,0 0}
+  to{background-position:0 1000px,0 1400px}
+}
+</style>
+</head>
+<body>
+<div class="snow"></div>
+<canvas id="canvas" width="400" height="600"></canvas>
+<script>
+const canvas=document.getElementById("canvas");
+const ctx=canvas.getContext("2d");
+
+let gifts=[];
+let currentGift=null;
+let score=0;
+
+function newGift(){
+  const w=Math.random()*60+40;
+  const h=30;
+  const x=canvas.width/2-w/2;
+  currentGift={x:x,y:0,w:w,h:h,color:`hsl(${Math.random()*360},80%,60%)`};
+}
+
+canvas.addEventListener("click",()=>{
+  if(currentGift){
+    gifts.push(currentGift);
+    currentGift=null;
+    newGift();
+  }
+});
+
+function draw(){
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  // Gifts
+  gifts.forEach(g=>{
+    ctx.fillStyle=g.color;
+    ctx.fillRect(g.x,g.y,g.w,g.h);
+  });
+  if(currentGift){
+    ctx.fillStyle=currentGift.color;
+    ctx.fillRect(currentGift.x,currentGift.y,currentGift.w,currentGift.h);
+    currentGift.y+=3; // Fallgeschwindigkeit
+    if(currentGift.y+currentGift.h>canvas.height){
+      currentGift.y=canvas.height-currentGift.h;
+    }
+  }
+  ctx.fillStyle="white";
+  ctx.font="20px sans-serif";
+  ctx.fillText("Score: "+score,10,30);
+}
+
+function update(){
+  if(currentGift) currentGift.y+=1;
+  gifts.forEach((g,i)=>{
+    if(g.y+g.h>=canvas.height){
+      score++;
+    }
+  });
+  draw();
+  requestAnimationFrame(update);
+}
+
+newGift();
+update();
+</script>
+</body>
+</html>

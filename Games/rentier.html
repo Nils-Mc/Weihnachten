@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🎮 Rentier-Rennen</title>
+<style>
+body{
+  margin:0;
+  font-family:system-ui,-apple-system,sans-serif;
+  overflow:hidden;
+  background: linear-gradient(to top, #071e18, #204f43);
+}
+#gameCanvas{
+  display:block;
+  margin:0 auto;
+  background: transparent;
+}
+
+.snow{
+  position:fixed;
+  inset:0;
+  pointer-events:none;
+  background-image:
+    radial-gradient(white 1px,transparent 1px),
+    radial-gradient(white 1px,transparent 1px);
+  background-size:40px 40px,70px 70px;
+  animation:snow 20s linear infinite;
+}
+@keyframes snow{
+  from{background-position:0 0,0 0}
+  to{background-position:0 1000px,0 1400px}
+}
+</style>
+</head>
+<body>
+<div class="snow"></div>
+<canvas id="gameCanvas" width="600" height="400"></canvas>
+
+<script>
+const canvas=document.getElementById("gameCanvas");
+const ctx=canvas.getContext("2d");
+
+let rX=270, rY=350, rW=60, rH=60;
+let obs=[], obsSpeed=2;
+let keys={};
+let score=0;
+
+function spawnObs(){
+  const width=Math.random()*50+30;
+  obs.push({x:Math.random()*(canvas.width-width), y:-50, w:width, h:20});
+}
+
+document.addEventListener("keydown",e=>keys[e.key]=true);
+document.addEventListener("keyup",e=>keys[e.key]=false);
+
+function drawReindeer(){
+  ctx.fillStyle="red";
+  ctx.fillRect(rX,rY,rW,rH);
+}
+
+function drawObs(){
+  ctx.fillStyle="green";
+  obs.forEach(o=>ctx.fillRect(o.x,o.y,o.w,o.h));
+}
+
+function update(){
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+
+  // Bewegung
+  if(keys["ArrowLeft"] && rX>0) rX-=5;
+  if(keys["ArrowRight"] && rX+rW<canvas.width) rX+=5;
+
+  // Hindernisse
+  obs.forEach(o=>o.y+=obsSpeed);
+
+  // Kollision
+  obs.forEach(o=>{
+    if(rX<o.x+o.w && rX+rW>o.x && rY<o.y+o.h && rY+rH>o.y){
+      alert("Game Over! Score: "+score);
+      score=0;
+      obs=[];
+      rX=270;
+      rY=350;
+    }
+  });
+
+  // Score
+  obs.forEach(o=>{if(o.y>canvas.height)score++;});
+
+  // Zeichnen
+  drawReindeer();
+  drawObs();
+
+  if(Math.random()<0.02) spawnObs();
+  requestAnimationFrame(update);
+}
+
+update();
+</script>
+</body>
+</html>
