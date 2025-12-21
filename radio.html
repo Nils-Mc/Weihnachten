@@ -3,129 +3,154 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>🎅 Weihnachtsradio</title>
+<title>🎄 Weihnachtsradio</title>
+
 <style>
-body{
-  margin:0;
-  font-family:system-ui,-apple-system,sans-serif;
-  overflow:hidden;
-  background: linear-gradient(to top,#071e18,#204f43);
-  color:white;
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  overflow: hidden;
+  font-family: system-ui, -apple-system, sans-serif;
+  background: radial-gradient(circle at top, #1b4d3e, #061a14);
+  color: white;
 }
-canvas{
-  position:absolute;
-  inset:0;
-  z-index:1;
+
+/* Glass Card */
+.card {
+  position: absolute;
+  top: 30px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 1.5rem 2.5rem;
+  border-radius: 30px;
+  background: rgba(255,255,255,0.12);
+  backdrop-filter: blur(10px);
+  box-shadow: 0 0 50px rgba(0,0,0,0.4);
+  z-index: 10;
+  text-align: center;
 }
-#radioUI{
-  position:absolute;
-  top:10px;
-  left:50%;
-  transform:translateX(-50%);
-  z-index:10;
-  text-align:center;
+
+.card h1 {
+  margin: 0;
+  font-size: 2rem;
+  letter-spacing: 1px;
 }
-#radioUI h1{
-  margin:0;
-  font-size:2rem;
+
+/* Start Overlay */
+#overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0,0,0,0.4);
+  cursor: pointer;
+}
+
+#overlay span {
+  padding: 1.2rem 2rem;
+  border-radius: 30px;
+  background: rgba(255,255,255,0.2);
+  backdrop-filter: blur(10px);
+  font-size: 1.3rem;
+}
+
+/* Schnee */
+.snow {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background-image:
+    radial-gradient(white 1px, transparent 1px),
+    radial-gradient(white 1px, transparent 1px);
+  background-size: 40px 40px, 80px 80px;
+  animation: snow 25s linear infinite;
+  z-index: 1;
+}
+
+@keyframes snow {
+  from { background-position: 0 0, 0 0; }
+  to   { background-position: 0 1600px, 0 2400px; }
+}
+
+/* Weihnachtsmann */
+.santa {
+  position: absolute;
+  top: 20%;
+  left: -200px;
+  font-size: 4rem;
+  animation: santaFly 18s linear infinite;
+  z-index: 2;
+}
+
+@keyframes santaFly {
+  from { transform: translateX(0); }
+  to   { transform: translateX(calc(100vw + 300px)); }
+}
+
+/* Baum */
+.tree {
+  position: absolute;
+  bottom: 40px;
+  right: 40px;
+  font-size: 5rem;
+  animation: treeWobble 3s ease-in-out infinite;
+  z-index: 2;
+}
+
+@keyframes treeWobble {
+  0%,100% { transform: rotate(0deg); }
+  50% { transform: rotate(2deg); }
+}
+
+/* YouTube */
+iframe {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border: none;
+  pointer-events: none;
+  z-index: 0;
 }
 </style>
 </head>
+
 <body>
 
-<div id="radioUI">
-  <h1>🎄 Weihnachtsradio läuft …</h1>
+<div class="snow"></div>
+
+<div class="card">
+  <h1>🎄 Weihnachtsradio</h1>
 </div>
 
-<canvas id="canvas" width="800" height="600"></canvas>
+<div class="santa">🎅🛷</div>
+<div class="tree">🎄</div>
+
+<div id="overlay">
+  <span>▶️ Tippen zum Starten</span>
+</div>
+
+<iframe
+  id="player"
+  src="https://www.youtube.com/embed/IRfb8roh9KA?enablejsapi=1&mute=1&controls=0&loop=1&playlist=IRfb8roh9KA&playsinline=1&modestbranding=1&rel=0"
+  allow="autoplay; fullscreen">
+</iframe>
 
 <script>
-// 🔹 Schneefall
-const canvas=document.getElementById("canvas");
-const ctx=canvas.getContext("2d");
-canvas.width=window.innerWidth;
-canvas.height=window.innerHeight;
+const overlay = document.getElementById("overlay");
+const player = document.getElementById("player");
 
-let snow=[];
-for(let i=0;i<200;i++){
-  snow.push({x:Math.random()*canvas.width,y:Math.random()*canvas.height,r:Math.random()*3+1,speed:Math.random()*1+0.5});
-}
-
-// Rentier & Baum Animation
-let reindeer={x:0,y:canvas.height-80,w:80,h:50};
-let tree={x:canvas.width-100,y:canvas.height-200,w:60,h:120,angle:0};
-let santa={x:-100,y:100,w:120,h:60};
-
-// 🔹 Musik
-let tracks=["Music/song1.mp3","Music/song2.mp3"];
-let current=0;
-const audio=new Audio();
-audio.src=tracks[current];
-audio.volume=0;
-audio.play();
-audio.addEventListener("ended",nextTrack);
-
-function nextTrack(){
-  current=(current+1)%tracks.length;
-  audio.src=tracks[current];
-  fadeIn(audio,0.05);
-  audio.play();
-}
-
-function fadeIn(audio,step){
-  audio.volume=0;
-  let id=setInterval(()=>{
-    if(audio.volume<1) audio.volume=Math.min(audio.volume+step,1);
-    else clearInterval(id);
-  },200);
-}
-
-function fadeOut(audio,step,nextFunc){
-  let id=setInterval(()=>{
-    if(audio.volume>0) audio.volume=Math.max(audio.volume-step,0);
-    else{clearInterval(id);nextFunc();}
-  },200);
-}
-
-// 🔹 Zeichnen
-function draw(){
-  ctx.clearRect(0,0,canvas.width,canvas.height);
-
-  // Schnee
-  snow.forEach(s=>{
-    ctx.beginPath();
-    ctx.arc(s.x,s.y,s.r,0,Math.PI*2);
-    ctx.fillStyle="white";
-    ctx.fill();
-    s.y+=s.speed;
-    if(s.y>canvas.height) s.y=0;
-  });
-
-  // Rentier (rot)
-  ctx.fillStyle="red";
-  ctx.fillRect(reindeer.x,reindeer.y,reindeer.w,reindeer.h);
-  reindeer.x+=2;
-  if(reindeer.x>canvas.width) reindeer.x=-reindeer.w;
-
-  // Baum (wackelnd)
-  tree.angle=Math.sin(Date.now()/300)*0.1;
-  ctx.save();
-  ctx.translate(tree.x+tree.w/2,tree.y+tree.h);
-  ctx.rotate(tree.angle);
-  ctx.fillStyle="green";
-  ctx.fillRect(-tree.w/2,-tree.h,tree.w,tree.h);
-  ctx.restore();
-
-  // Weihnachtsmann
-  ctx.fillStyle="white";
-  ctx.fillRect(santa.x,santa.y,santa.w,santa.h);
-  santa.x+=3;
-  if(santa.x>canvas.width) santa.x=-santa.w;
-
-  requestAnimationFrame(draw);
-}
-
-draw();
+overlay.addEventListener("click", () => {
+  player.contentWindow.postMessage(
+    '{"event":"command","func":"playVideo","args":""}',
+    "*"
+  );
+  overlay.remove();
+});
 </script>
+
 </body>
 </html>
