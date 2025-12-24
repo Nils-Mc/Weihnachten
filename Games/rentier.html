@@ -16,7 +16,12 @@ html, body {
   color: white;
 }
 
-/* Glass HUD */
+canvas {
+  position: fixed;
+  inset: 0;
+}
+
+/* HUD */
 .hud {
   position: fixed;
   top: 20px;
@@ -26,15 +31,9 @@ html, body {
   border-radius: 30px;
   background: rgba(255,255,255,0.15);
   backdrop-filter: blur(10px);
-  box-shadow: 0 0 40px rgba(0,0,0,0.4);
   z-index: 10;
   font-size: 1.2rem;
-}
-
-/* Game */
-canvas {
-  position: fixed;
-  inset: 0;
+  display: none;
 }
 
 /* Schnee */
@@ -55,32 +54,41 @@ canvas {
   to   { background-position: 0 2000px, 0 3000px; }
 }
 
-/* Game Over */
-#gameOver {
+/* Overlay (Start & Game Over) */
+.overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0,0,0,0.6);
-  display: none;
+  background: rgba(0,0,0,0.65);
+  display: flex;
   align-items: center;
   justify-content: center;
   z-index: 20;
 }
 
-#gameOver div {
+.card {
   background: rgba(255,255,255,0.18);
   backdrop-filter: blur(12px);
   padding: 2rem 3rem;
   border-radius: 30px;
   text-align: center;
+  width: min(90%, 380px);
 }
 
-#gameOver button {
-  margin-top: 1rem;
-  padding: 0.7rem 1.5rem;
-  border-radius: 20px;
+.card h1 {
+  margin-top: 0;
+}
+
+button {
+  margin-top: 1.5rem;
+  padding: 0.8rem 1.8rem;
+  border-radius: 25px;
   border: none;
   font-size: 1rem;
   cursor: pointer;
+}
+
+input[type="range"] {
+  width: 100%;
 }
 </style>
 </head>
@@ -89,14 +97,27 @@ canvas {
 
 <div class="hud">🎄 Punkte: <span id="score">0</span></div>
 <div class="snow"></div>
-
 <canvas id="game"></canvas>
 
-<div id="gameOver">
-  <div>
-    <h2>🎅 Oh nein!</h2>
-    <p>Dein Score: <span id="finalScore"></span></p>
-    <button onclick="restart()">Nochmal 🎄</button>
+<!-- STARTSCREEN -->
+<div id="startScreen" class="overlay">
+  <div class="card">
+    <h1>🦌 Rentier-Rennen</h1>
+    <p>Schwierigkeit wählen</p>
+
+    <input type="range" min="1" max="3" value="2" id="difficulty">
+    <p id="diffLabel">🟡 Mittel</p>
+
+    <button onclick="startGame()">▶️ Start</button>
+  </div>
+</div>
+
+<!-- GAME OVER -->
+<div id="gameOver" class="overlay" style="display:none">
+  <div class="card">
+    <h2>🎅 Game Over</h2>
+    <p>Score: <span id="finalScore"></span></p>
+    <button onclick="location.reload()">Nochmal</button>
   </div>
 </div>
 
@@ -106,42 +127,64 @@ const ctx = canvas.getContext("2d");
 canvas.width = innerWidth;
 canvas.height = innerHeight;
 
-let reindeer = { x: canvas.width / 2, y: canvas.height - 120, size: 50 };
-let trees = [];
-let speed = 4;
+let reindeer, trees, speed, spawnRate;
 let score = 0;
-let running = true;
+let running = false;
 let move = 0;
 
-function spawnTree() {
-  trees.push({
-    x: Math.random() * (canvas.width - 60) + 30,
-    y: -80,
-    size: 60
-  });
-}
+/* Schwierigkeit */
+const diff = document.getElementById("difficulty");
+const label = document.getElementById("diffLabel");
 
-document.addEventListener("keydown", e => {
+diff.oninput = () => {
+  label.textContent =
+    diff.value == 1 ? "🟢 Leicht" :
+    diff.value == 2 ? "🟡 Mittel" :
+                      "🔴 Schwer";
+};
+
+/* Steuerung */
+addEventListener("keydown", e => {
   if (e.key === "ArrowLeft") move = -1;
   if (e.key === "ArrowRight") move = 1;
 });
-document.addEventListener("keyup", () => move = 0);
+addEventListener("keyup", () => move = 0);
 
 canvas.addEventListener("touchmove", e => {
   reindeer.x = e.touches[0].clientX;
 });
 
-function drawReindeer() {
-  ctx.font = reindeer.size + "px serif";
-  ctx.textAlign = "center";
-  ctx.fillText("🦌", reindeer.x, reindeer.y);
+/* Spielstart */
+function startGame() {
+  document.getElementById("startScreen").style.display = "none";
+  document.querySelector(".hud").style.display = "block";
+  startMusic();
+
+  reindeer = { x: canvas.width/2, y: canvas.height-120, size: 50 };
+  trees = [];
+  score = 0;
+
+  if (diff.value == 1) {
+    speed = 3;
+    spawnRate = 0.015;
+  } else if (diff.value == 2) {
+    speed = 4;
+    spawnRate = 0.025;
+  } else {
+    speed = 5.5;
+    spawnRate = 0.04;
+  }
+
+  running = true;
+  update();
 }
 
-function drawTrees() {
-  trees.forEach(t => {
-    ctx.font = t.size + "px serif";
-    ctx.textAlign = "center";
-    ctx.fillText("🎄", t.x, t.y);
+/* Baum */
+function spawnTree() {
+  trees.push({
+    x: Math.random() * (canvas.width - 60) + 30,
+    y: -80,
+    size: 60
   });
 }
 
@@ -156,9 +199,8 @@ function update() {
   trees.forEach(t => t.y += speed);
 
   trees.forEach(t => {
-    const dx = reindeer.x - t.x;
-    const dy = reindeer.y - t.y;
-    if (Math.abs(dx) < 40 && Math.abs(dy) < 40) {
+    if (Math.abs(reindeer.x - t.x) < 40 &&
+        Math.abs(reindeer.y - t.y) < 40) {
       endGame();
     }
   });
@@ -172,10 +214,16 @@ function update() {
     return true;
   });
 
-  drawReindeer();
-  drawTrees();
+  ctx.font = "50px serif";
+  ctx.textAlign = "center";
+  ctx.fillText("🦌", reindeer.x, reindeer.y);
 
-  if (Math.random() < 0.02) spawnTree();
+  trees.forEach(t => {
+    ctx.font = t.size + "px serif";
+    ctx.fillText("🎄", t.x, t.y);
+  });
+
+  if (Math.random() < spawnRate) spawnTree();
 
   requestAnimationFrame(update);
 }
@@ -185,22 +233,9 @@ function endGame() {
   document.getElementById("finalScore").textContent = score;
   document.getElementById("gameOver").style.display = "flex";
 }
-
-function restart() {
-  trees = [];
-  score = 0;
-  running = true;
-  document.getElementById("score").textContent = 0;
-  document.getElementById("gameOver").style.display = "none";
-  update();
-}
-
-update();
 </script>
 
-</body>
-
-<!-- Unsichtbarer Musik-Player -->
+<!-- 🎵 Hintergrundmusik -->
 <iframe id="music"
   style="display:none"
   src="https://www.youtube.com/embed/IRfb8roh9KA?enablejsapi=1&controls=0&mute=0&loop=1&playlist=IRfb8roh9KA"
@@ -208,16 +243,15 @@ update();
 </iframe>
 
 <script>
-let musicStarted = false;
+let musicStarted=false;
 function startMusic(){
   if(musicStarted) return;
-  document.getElementById("music").contentWindow.postMessage(
+  music.contentWindow.postMessage(
     '{"event":"command","func":"playVideo","args":""}',"*"
   );
-  musicStarted = true;
+  musicStarted=true;
 }
-addEventListener("click", startMusic, { once:true });
-addEventListener("touchstart", startMusic, { once:true });
 </script>
 
+</body>
 </html>
