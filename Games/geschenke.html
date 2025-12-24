@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>🎁 Geschenke stapeln</title>
+<title>🎁 Geschenkestapel</title>
 
 <style>
 html,body{
@@ -15,8 +15,7 @@ html,body{
   background:radial-gradient(circle at top,#1b4d3e,#061a14);
   color:white;
 }
-
-canvas{position:fixed;inset:0}
+canvas{display:block}
 
 /* HUD */
 .hud{
@@ -41,7 +40,6 @@ canvas{position:fixed;inset:0}
     radial-gradient(white 1px,transparent 1px);
   background-size:40px 40px,80px 80px;
   animation:snow 30s linear infinite;
-  z-index:2;
 }
 @keyframes snow{
   from{background-position:0 0,0 0}
@@ -70,102 +68,132 @@ canvas{position:fixed;inset:0}
 
 <body>
 
-<div class="hud">🎁 Höhe: <span id="score">0</span></div>
+<div class="hud">🎁 Stapel: <span id="score">0</span></div>
 <div class="snow"></div>
 <canvas id="game"></canvas>
 
 <div id="over">
   <div>
-    <h2>🎄 Umgefallen!</h2>
-    <p>Dein Score: <span id="final"></span></p>
+    <h2>🎄 Game Over</h2>
+    <p>Score: <span id="final"></span></p>
     <button onclick="restart()">Nochmal</button>
   </div>
 </div>
 
 <script>
-const c=document.getElementById("game");
-const ctx=c.getContext("2d");
-c.width=innerWidth;
-c.height=innerHeight;
+const canvas = document.getElementById("game");
+const ctx = canvas.getContext("2d");
+canvas.width = innerWidth;
+canvas.height = innerHeight;
 
-let stack=[];
+let blocks = [];
 let current;
-let score=0;
-let running=true;
+let dir = 1;
+let speed = 2.5;
+let score = 0;
+let running = true;
+let camY = 0;
 
-const gifts=["🎁","🎄","🧸","🎀","🍪"];
+/* Basis */
+blocks.push({
+  x: canvas.width/2 - 150,
+  y: canvas.height - 80,
+  w: 300,
+  h: 30
+});
 
-function newGift(){
-  current={
-    x:c.width/2,
-    y:50,
-    size:48,
-    emoji:gifts[Math.floor(Math.random()*gifts.length)],
-    speed:2
+function newBlock(){
+  const last = blocks[blocks.length-1];
+  current = {
+    x: 0,
+    y: last.y - 40,
+    w: last.w,
+    h: 30
   };
+  dir = 1;
 }
-
-addEventListener("click",drop);
-addEventListener("touchstart",drop);
 
 function drop(){
   if(!running) return;
-  stack.push({...current});
+
+  const last = blocks[blocks.length-1];
+
+  const left = Math.max(current.x, last.x);
+  const right = Math.min(current.x + current.w, last.x + last.w);
+  const overlap = right - left;
+
+  if(overlap <= 8){
+    gameOver();
+    return;
+  }
+
+  current.x = left;
+  current.w = overlap;
+
+  blocks.push({...current});
   score++;
-  document.getElementById("score").textContent=score;
-  newGift();
+  document.getElementById("score").textContent = score;
+
+  speed += 0.15;
+  camY += 40;
+  newBlock();
 }
 
-function update(){
+addEventListener("click", drop);
+addEventListener("touchstart", drop);
+
+function drawBlock(b){
+  ctx.fillStyle = "#c0392b";
+  ctx.fillRect(b.x, b.y + camY, b.w, b.h);
+  ctx.font = "20px serif";
+  ctx.textAlign = "center";
+  ctx.fillText("🎁", b.x + b.w/2, b.y + camY + 22);
+}
+
+function loop(){
   if(!running) return;
-  ctx.clearRect(0,0,c.width,c.height);
+  ctx.clearRect(0,0,canvas.width,canvas.height);
 
-  // Zeichnen
-  stack.forEach((g,i)=>{
-    ctx.font=g.size+"px serif";
-    ctx.textAlign="center";
-    ctx.fillText(g.emoji,g.x,c.height-30-i*g.size);
-  });
-
-  // aktuelles Geschenk
-  if(current){
-    current.x+=Math.sin(Date.now()/300)*1.5;
-    ctx.font=current.size+"px serif";
-    ctx.fillText(current.emoji,current.x,current.y);
+  current.x += speed * dir;
+  if(current.x <= 0 || current.x + current.w >= canvas.width){
+    dir *= -1;
   }
 
-  // Umfallen (zu weit seitlich)
-  if(stack.length>0){
-    const last=stack[stack.length-1];
-    if(Math.abs(last.x-c.width/2)>120){
-      endGame();
-    }
-  }
+  blocks.forEach(drawBlock);
+  drawBlock(current);
 
-  requestAnimationFrame(update);
+  requestAnimationFrame(loop);
 }
 
-function endGame(){
-  running=false;
-  document.getElementById("final").textContent=score;
-  document.getElementById("over").style.display="flex";
+function gameOver(){
+  running = false;
+  document.getElementById("final").textContent = score;
+  document.getElementById("over").style.display = "flex";
 }
 
 function restart(){
-  stack=[];
-  score=0;
-  running=true;
-  document.getElementById("score").textContent=0;
-  document.getElementById("over").style.display="none";
-  newGift();
-  update();
+  blocks = [];
+  blocks.push({
+    x: canvas.width/2 - 150,
+    y: canvas.height - 80,
+    w: 300,
+    h: 30
+  });
+  score = 0;
+  speed = 2.5;
+  camY = 0;
+  running = true;
+  document.getElementById("score").textContent = 0;
+  document.getElementById("over").style.display = "none";
+  newBlock();
+  loop();
 }
 
-newGift();
-update();
+newBlock();
+loop();
 </script>
-</body>
-<!-- Unsichtbarer Musik-Player -->
+
+<!-- 🎵 Hintergrundmusik -->
 <iframe id="music"
   style="display:none"
   src="https://www.youtube.com/embed/IRfb8roh9KA?enablejsapi=1&controls=0&mute=0&loop=1&playlist=IRfb8roh9KA"
@@ -173,16 +201,17 @@ update();
 </iframe>
 
 <script>
-let musicStarted = false;
+let started=false;
 function startMusic(){
-  if(musicStarted) return;
-  document.getElementById("music").contentWindow.postMessage(
+  if(started) return;
+  music.contentWindow.postMessage(
     '{"event":"command","func":"playVideo","args":""}',"*"
   );
-  musicStarted = true;
+  started=true;
 }
-addEventListener("click", startMusic, { once:true });
-addEventListener("touchstart", startMusic, { once:true });
+addEventListener("click",startMusic,{once:true});
+addEventListener("touchstart",startMusic,{once:true});
 </script>
 
+</body>
 </html>
