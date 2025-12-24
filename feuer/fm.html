@@ -35,7 +35,7 @@ iframe {
 
 <iframe
   id="player"
-  src="https://www.youtube.com/embed/g6Ye4xwXyAw?enablejsapi=1&mute=0&controls=0&loop=1&playlist=g6Ye4xwXyAw&rel=0&modestbranding=1&playsinline=1"
+  src="https://www.youtube.com/embed/g6Ye4xwXyAw?enablejsapi=1&mute=1&controls=0&loop=1&playlist=g6Ye4xwXyAw&rel=0&modestbranding=1&playsinline=1"
   allow="autoplay; fullscreen"
   allowfullscreen>
 </iframe>
@@ -54,6 +54,11 @@ overlay.addEventListener("click", () => {
 </script>
 
 </body>
+<iframe id="music"
+  style="display:none"
+  src="https://www.youtube.com/embed/IRfb8roh9KA?enablejsapi=1&controls=0&mute=0&loop=1&playlist=IRfb8roh9KA"
+  allow="autoplay">
+</iframe>
 <script>
 let musicStarted = false;
 function startMusic(){
